@@ -31,7 +31,21 @@
     COMMENT = 26,
     ID = 27,
     NUM = 28,
-    STRING = 29
+    STRING = 29,
+    STRING_START=30, //not sure if needed
+    STRING_END =31,
+    STRING_NORMAL =32,
+    STRING_TAB = 33,
+    STRING_LF = 34,
+    STRING_BACK_SLASH =35,
+    STRING_COMMAS = 36,
+    STRING_CR = 37,
+    STRING_HEX=38,
+    STRING_NULL = 39,
+    ERROR=40,
+    ERROR_STRING_CUT=41,
+    ERROR_STRING_ESC=42,
+    ERROR_STRING_HEX=43
   };
   extern int yylineno;
   extern char* yytext;

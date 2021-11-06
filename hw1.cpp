@@ -6,17 +6,6 @@
 
 using namespace std;
 
-enum tokentype2{
-	STRING_START=30, //not sure if needed
-	STRING_END =31,
-	STRING_NORMAL =32,
-	STRING_TAB = 33,
-	STRING_LF = 34,
-	STRING_BACK_SLASH =35,
-	STRING_COMMAS = 36,
-	STRING_HEX=37 //not managed yet in lex file
-
-};//not sure if \0 is included
 
 void showToken(const string val){
 	cout<<yylineno<<" "<<val<<" " << yytext<< endl;
@@ -24,18 +13,34 @@ void showToken(const string val){
 
 void showStringToken(const string str)
 {
-	cout<<yylineno<<" STRING "<< str;
+	cout<<yylineno<<" STRING "<< str <<endl;
 }
 
-string hexToString (string hexString)
+void showCommentToken()
 {
-	char ascii;
-	hexString= hexString.substr(1,hexString.size()-1);
+	cout<<yylineno<<" COMMENT //"<<endl;
+}
+
+string hexToString(string hexString)
+{
+	int ascii;
+	string NumString= hexString.substr(2,hexString.size()-2);
 	stringstream convertStream;
-	convertStream << hex <<hexString;
+	convertStream << hex <<NumString;
 	convertStream >> ascii;
 	string s(1,ascii);
 	return s;
+}
+
+string extractIllegalHex()
+{
+	string str = yytext;
+	if(str[str.size()-1]=='\"'){
+		return str.substr(1,2);
+	}
+	else{
+		return str.substr(1,3);
+	}
 }
 
 int main()
@@ -121,7 +126,7 @@ int main()
 				showToken("BINOP");
 				break;
 			case COMMENT:
-				showToken("COMMENT");
+				showCommentToken();
 				break;							
 			case ID:
 				showToken("ID");
@@ -142,7 +147,7 @@ int main()
 				strBuilder.append("\\");
 				break;
 			case STRING_TAB:
-				strBuilder.append("\r");
+				strBuilder.append("\t");
 				break;
 			case STRING_LF:
 				strBuilder.append("\n");
@@ -150,9 +155,27 @@ int main()
 			case STRING_COMMAS:
 				strBuilder.append("\"");
 				break;
+			case STRING_CR:
+				strBuilder.append("\r");
+				break;
+			case STRING_NULL:
+			    strBuilder.append("\0");
+				break;
 			case STRING_HEX:
 				strBuilder.append(hexToString(yytext));
 				break;
+			case ERROR://maybe we should trim it
+				cout<<"Error "<<yytext<<"\n" <<endl; exit(-1);
+				break; 
+			case ERROR_STRING_CUT:	
+				cout<<"Error unclosed string\n"<<endl; exit(-2);
+				break;
+			case ERROR_STRING_HEX: //not managed yet
+				cout<<"Error undefined escape sequence " << extractIllegalHex() <<"\n" <<endl; exit(-3);
+
+			case ERROR_STRING_ESC:
+				cout<<"Error undefined escape sequence " << yytext <<"\n" <<endl; exit(-3);
+
 
 	
 		}
