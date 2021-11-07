@@ -1,0 +1,38 @@
+#!/bin/bash
+
+flex scanner.lex &> /dev/null
+if [[ $? != 0 ]] 
+	then
+		echo "Cannot build submission!"
+		exit
+fi
+g++ -std=c++17 lex.yy.c hw1.cpp -o hw1.out &> /dev/null
+if [[ $? != 0 ]] 
+	then
+		echo "Cannot build submission!"
+		exit
+fi
+if [ ! -f hw1.out ]
+	then
+		echo "Cannot build submission!"
+		exit
+fi
+#	number of tests:
+numtests=17
+#	command to execute test:
+command="./hw1.out < ta\$i.in >& ta\$i.out"
+i="1"
+while [ $i -le $numtests ]
+	do
+		eval $command
+		diff ta$i.out ta$i.in.res &> /dev/null
+		if [[ $? != 0 ]] 
+			then
+				echo "Failed test #"$i"!"
+		fi
+		i=$[$i+1]
+done
+
+
+echo "Ok to submit :)"
+exit

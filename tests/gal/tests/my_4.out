@@ -1,0 +1,14 @@
+1 STRING simple
+2 STRING also 'simple'
+3 STRING escape new
+lines
+
+4 STRING hex 0
+5 STRING hex2 B
+6 STRING hex2 :
+7 STRING hi	how	are	you
+8 STRING \"
+	
+9 STRING VWXY
+10 STRING if int is not void = true
+11 STRING else byte != < ;

@@ -171,7 +171,7 @@ int main()
 				cout<<"Error unclosed string"<<endl; exit(-2);
 				break;
 			case ERROR_STRING_HEX: //not managed yet
-				cout<<"Error undefined escape sequence " << extractIllegalHex()  <<endl; exit(-3);
+				cout<<"Error undefined escape sequence " << extractIllegalHex() <<endl; exit(-3);
 
 			case ERROR_STRING_ESC:
 				cout<<"Error undefined escape sequence " <<yytext[1] <<endl; exit(-3);

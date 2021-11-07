@@ -1,0 +1,3 @@
+void
+int
+"this is ok \x40 but this is unclosed \" \n

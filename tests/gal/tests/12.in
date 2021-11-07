@@ -1,0 +1,4 @@
+"this is a string" and "this is a string" as well
+but "this is unclosed
+and "this has \n
+again" void

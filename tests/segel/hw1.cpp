@@ -165,16 +165,16 @@ int main()
 				strBuilder.append(hexToString(yytext));
 				break;
 			case ERROR://maybe we should trim it
-				cout<<"Error "<<yytext <<endl; exit(-1);
+				cout<<"Error "<<yytext<<"\n" <<endl; exit(-1);
 				break; 
 			case ERROR_STRING_CUT:	
-				cout<<"Error unclosed string"<<endl; exit(-2);
+				cout<<"Error unclosed string\n"<<endl; exit(-2);
 				break;
 			case ERROR_STRING_HEX: //not managed yet
-				cout<<"Error undefined escape sequence " << extractIllegalHex()  <<endl; exit(-3);
+				cout<<"Error undefined escape sequence " << extractIllegalHex() <<"\n" <<endl; exit(-3);
 
 			case ERROR_STRING_ESC:
-				cout<<"Error undefined escape sequence " <<yytext[1] <<endl; exit(-3);
+				cout<<"Error undefined escape sequence " << yytext <<"\n" <<endl; exit(-3);
 
 
 	
