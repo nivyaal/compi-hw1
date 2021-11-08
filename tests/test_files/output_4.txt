@@ -1,0 +1,8 @@
+1 RELOP !=
+1 BINOP +
+2 STRING r:2 c\+,%6p^n"jyMU
+U8]M	.8hB
+2 NUM 5728858793
+2 WHILE while
+2 COMMENT //
+Error ]
