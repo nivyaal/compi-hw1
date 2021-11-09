@@ -4,4 +4,7 @@
 3 LPAREN (
 3 RPAREN )
 3 LBRACE {
-Error undefined escape sequence x6f
+4 STRING the encrypted string is: compilation is cool!
+
+5 STRING printed stuff
+6 RBRACE }
