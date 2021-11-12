@@ -32,25 +32,34 @@ class Tester:
     BASIC_TOKENS_FILE = os.path.join(UTILS_DIR, "basic_tokens.txt")
     BINOP_TOKEN_FILE = os.path.join(UTILS_DIR, "binop_token.txt")
     RELOP_TOKEN_FILE = os.path.join(UTILS_DIR, "relop_token.txt")
-    TOKEN_TYPES = ["BASIC", "BINOP", "RELOP", "COMMENT", "ID", "NUM", "STRING"]
+    UNDEFINED_LEXEMES_FILE = os.path.join(UTILS_DIR, "undefined_lexemes.txt")
     BASIC_TOKENS_DICT = {}
     BINOP_TOKEN_LIST = []
     RELOP_TOKEN_LIST = []
     PRINTABLE_CHARS = []
     HEX_CHARS = []
     SPECIAL_STRING_CHARS = []
+    UNDEFINED_LEXEMES = []
     with open(CONFIG_FILE, 'r') as config_file:
-        GENERATED_TOKENS = int(config_file.readline().strip('\n'))
-        GENERATED_FILES = int(config_file.readline().strip('\n'))
-        EXEC_FILE = config_file.readline().strip('\n')
+        next_line = config_file.readline().strip('\n')
+        assert next_line.startswith("NUM_OF_TOKENS="), "Error: config file"
+        GENERATED_TOKENS = int(next_line.replace("NUM_OF_TOKENS=", ""))
+        next_line = config_file.readline().strip('\n')
+        assert next_line.startswith("NUM_OF_TESTS="), "Error: config file"
+        GENERATED_FILES = int(next_line.replace("NUM_OF_TESTS=", ""))
+        next_line = config_file.readline().strip('\n')
+        assert next_line.startswith("EXEC_FILE="), "Error: config file"
+        EXEC_FILE = next_line.replace("EXEC_FILE=", "")
         COMP_CMD = []
-        COMP_CMD.append(config_file.readline().strip('\n').split())
-        COMP_CMD.append(config_file.readline().strip('\n').split())
-    # TODO: there are some serious issues with \r in csComp
-    # WHITESPACES = [' ', '\t', '\n', '\r']
-    WHITESPACES = [' ', '\t', '\n']
-    # NEW_LINE = ['\n', '\r']
-    NEW_LINE = ['\n']
+        for i in [1,2]:
+            next_line = config_file.readline().strip('\n')
+            assert next_line.startswith(f"COMP_CMD_{i}="), "Error: config file"
+            COMP_CMD.append(next_line.replace(f"COMP_CMD_{i}=", "").split())
+        next_line = config_file.readline().strip('\n')
+        assert next_line.startswith("TOKEN_TYPES="), "Error: config file"
+        TOKEN_TYPES = next_line.replace("TOKEN_TYPES=", "").split()
+    WHITESPACES = [' ', '\t', '\n', '\r']
+    NEW_LINE = ['\n', '\r']
     FAILED_TESTS_ERROR_MSG = """
 Please check the diff files in the tests/test_files directory.
 You can do so by running the tester with the following flag:
@@ -66,8 +75,13 @@ any new input files run the tester with the following flags:
 For instance:
 tests/tester.py --compile --run_test 4
 """
-    RUN_TEST_CMD = [os.path.join(MAIN_DIR, EXEC_FILE)]
-
+    EXEC_FILE_FULL_PATH = os.path.join(MAIN_DIR, EXEC_FILE)
+    RUN_TEST_CMD = [EXEC_FILE_FULL_PATH]
+    ERROR_TYPES = [
+        "ERROR_UNDEFINED_LEXEME",
+        "ERROR_STRING_UNEXPECTED_END",
+        "ERROR_STRING_UNDEFINED_ESCAPE_SEQUENCE"
+    ]
 
     @staticmethod
     def colored_print(str, color, new_line):
@@ -110,6 +124,10 @@ tests/tester.py --compile --run_test 4
         parser.add_argument("-s", "--show_diff",
                             default=None,
                             help="show diff file of specific test")
+        parser.add_argument("-e", "--errors",
+                            action="store_true",
+                            default=False,
+                            help="generate negative tests")
         return parser.parse_args()
 
     @classmethod
@@ -138,7 +156,7 @@ tests/tester.py --compile --run_test 4
         with open(cls.BASIC_TOKENS_FILE) as basic_tokens_file:
             line_number = 0
             for next_line in basic_tokens_file:
-                next_line = next_line.strip("\n").split()
+                next_line = next_line.strip('\n').split()
                 token_name = next_line[0]
                 token_value = next_line[1]
                 cls.BASIC_TOKENS_DICT[line_number] = [token_name, token_value]
@@ -162,6 +180,7 @@ tests/tester.py --compile --run_test 4
         high_limit = int('7E', 16)
         for printable_char in range(low_limit, high_limit + 1):
             cls.PRINTABLE_CHARS.append(chr(printable_char))
+        cls.PRINTABLE_CHARS.append("\t")
         cls.PRINTABLE_CHARS.remove("\\")
         cls.PRINTABLE_CHARS.remove("\"")
 
@@ -176,6 +195,13 @@ tests/tester.py --compile --run_test 4
         cls.SPECIAL_STRING_CHARS = ["\\n", "\\r", "\\t", "\\\\", "\\0", "\\\""]
 
     @classmethod
+    def generate_undefined_lexemes_list(cls):
+        with open(cls.UNDEFINED_LEXEMES_FILE, 'r') as undefined_lexemes_file:
+            for line in undefined_lexemes_file:
+                lexeme = chr(int(line.strip('\n')))
+                cls.UNDEFINED_LEXEMES.append(lexeme)
+
+    @classmethod
     def set_vars(cls):
         cls.generate_basic_tokens_dict()
         cls.generate_binop_token_list()
@@ -183,6 +209,7 @@ tests/tester.py --compile --run_test 4
         cls.generate_printable_chars_list()
         cls.generate_hex_chars_list()
         cls.generate_special_string_chars_list()
+        cls.generate_undefined_lexemes_list()
         cls.colored_print("     DONE", "GREEN", new_line=True)
 
     @classmethod
@@ -340,40 +367,84 @@ tests/tester.py --compile --run_test 4
 
     @classmethod
     def get_random_whitespace(cls):
-        random_index = random.randint(0, len(cls.WHITESPACES) - 1)
-        random_whitespace = cls.WHITESPACES[random_index]
-        return random_whitespace
+        return random.choice(cls.WHITESPACES)
 
     @classmethod
-    def generate_single_file(cls, file_index):
+    def get_random_undefined_lexeme(cls):
+        return random.choice(cls.UNDEFINED_LEXEMES)
+
+    @classmethod
+    def generate_random_error(cls):
+        error_type = random.choice(cls.ERROR_TYPES)
+        if error_type == "ERROR_UNDEFINED_LEXEME":
+            undefined_lexeme = cls.get_random_undefined_lexeme()
+            error_expected_str = "Error " + undefined_lexeme + "\n"
+            error_input = undefined_lexeme
+            return error_expected_str, error_input
+        elif error_type == "ERROR_STRING_UNEXPECTED_END":
+            error_expected_str = "Error unclosed string\n"
+            _, error_input, _ = cls.get_random_string_token()
+            error_input = error_input[:-1] + "\n" + error_input[-1]
+            return error_expected_str, error_input
+        elif error_type == "ERROR_STRING_UNDEFINED_ESCAPE_SEQUENCE":
+            error_expected_str = "Error undefined escape sequence " + "xF5" + "\n"
+            _, error_input_perfix, _ = cls.get_random_string_token()
+            _, error_input_suffix, _ = cls.get_random_string_token()
+            error_input = error_input_perfix[:-1] + "\\xF5" + error_input_suffix[1:]
+            return error_expected_str, error_input
+
+    @classmethod
+    def generate_single_file(cls, file_index, check_errors):
         input_file_name = cls.INPUT_FILE + '_' + str(file_index) + ".txt"
         expected_file_name = cls.EXPECTED_FILE + '_' + str(file_index) + ".txt"
+        generated_tokens_counter = 0;
+        if check_errors:
+            error_location = random.randint(0, cls.GENERATED_TOKENS)
+        else:
+            error_location = cls.GENERATED_TOKENS + 1
         with open(input_file_name, 'w') as input_file:
             with open(expected_file_name, 'w') as expected_file:
                 current_line_number = 1
                 for _ in range(cls.GENERATED_TOKENS):
                     whitespace = cls.get_random_whitespace()
-                    token_name, token_value_input, token_value_expected = cls.get_random_token()
-                    expected_line = str(current_line_number) + " "
-                    expected_line += token_name + " "
-                    expected_line += token_value_expected + "\n"
-                    expected_file.write(expected_line)
-                    input_file.write(token_value_input)
+                    if check_errors and error_location == generated_tokens_counter:
+                        error_expected_str, error_input = cls.generate_random_error()
+                        input_line = error_input
+                        expected_line = error_expected_str
+                    else: # generate a valid token
+                        token_name, token_value_input, token_value_expected = cls.get_random_token()
+                        input_line = token_value_input
+                        expected_line = str(current_line_number) + " "
+                        expected_line += token_name + " "
+                        expected_line += token_value_expected + "\n"
+                        if token_name == "COMMENT" and token_value_input.endswith("\n"):
+                            current_line_number += 1
+                    if error_location >= generated_tokens_counter:
+                        expected_file.write(expected_line)
+                    input_file.write(input_line)
                     input_file.write(whitespace)
-                    if token_name == "COMMENT":
+                    if whitespace == "\n":
                         current_line_number += 1
-                    if whitespace in cls.NEW_LINE:
-                        current_line_number += 1
+                    generated_tokens_counter += 1
 
     @classmethod
-    def generate_files(cls):
+    def generate_files(cls, check_errors):
         cls.colored_print("Generating files...", "MAGENTA", new_line=False)
         for i in range(cls.GENERATED_FILES):
-            cls.generate_single_file(i)
+            cls.generate_single_file(i, check_errors)
         cls.colored_print("          DONE", "GREEN", new_line=True)
 
     @classmethod
-    def compile(cls):
+    def compile(cls, compile, dont_test):
+        if not compile:
+            if not dont_test:
+                if not os.path.isfile(cls.EXEC_FILE_FULL_PATH):
+                    cls.colored_print("Execution file does not exist!", "RED", new_line=True)
+                    exit()
+                else:
+                    return
+            else:
+                return
         cls.colored_print("Running flex command...", "MAGENTA", new_line=False)
         completed_proc = subprocess.run(cls.COMP_CMD[0],
                                         stdout=subprocess.DEVNULL,
@@ -386,7 +457,7 @@ tests/tester.py --compile --run_test 4
             subprocess.run(cls.COMP_CMD[0])
             exit()
         cls.colored_print("Running g++ command...", "MAGENTA", new_line=False)
-        completed_proc= subprocess.run(cls.COMP_CMD[1],
+        completed_proc = subprocess.run(cls.COMP_CMD[1],
                                         stdout=subprocess.DEVNULL,
                                         stderr=subprocess.DEVNULL)
         if completed_proc.returncode == 0:
@@ -403,7 +474,8 @@ tests/tester.py --compile --run_test 4
             with open(output_file_name, 'w') as output_file:
                 subprocess.run(cls.RUN_TEST_CMD,
                                 stdin=input_file,
-                                stdout=output_file)
+                                stdout=output_file,
+                                stderr=output_file)
 
     @classmethod
     def check_diff_lines(cls, diff_file_name, diff_lines, file_index):
@@ -468,9 +540,8 @@ def main():
         Tester.print_diff_file(args.show_diff)
     Tester.prepare_env(args)
     if (not args.keep_files) and (args.run_test == "all"):
-        Tester.generate_files()
-    if args.compile:
-        Tester.compile()
+        Tester.generate_files(args.errors)
+    Tester.compile(args.compile, args.dont_test)
     if not args.dont_test:
         Tester.run_tests(args.run_test)
 

@@ -1,17 +1,1 @@
-1 RELOP !=
-1 ID rm4185WnY3490uJ2r
-1 STRING K
-\D\Mb	,s""\4^#Swk"]a\h	m,\~h-c:%fX
-\ u
-clYdl)"D"Kk\817`~
-"3:i"l3c>\+	c
-1 COMMENT //
-2 RELOP >=
-3 NUM 170960
-3 BINOP *
-3 NUM 15482
-3 STRING 
-FRa"Ei{jZMk	<t\.lB\X"bAzl_s+@JF*fbx
-`0
-4 STRING W
-\c
+1 FALSE false
