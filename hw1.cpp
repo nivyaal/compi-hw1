@@ -144,22 +144,22 @@ int main()
 				strBuilder.append(yytext);
 				break;
 			case STRING_BACK_SLASH:
-				strBuilder.append("\\");
+				strBuilder.append(1,'\\');
 				break;
 			case STRING_TAB:
-				strBuilder.append("\t");
+				strBuilder.append(1,'\t');
 				break;
 			case STRING_LF:
-				strBuilder.append("\n");
+				strBuilder.append(1,'\n');
 				break;
 			case STRING_COMMAS:
-				strBuilder.append("\"");
+				strBuilder.append(1,'\"');
 				break;
 			case STRING_CR:
-				strBuilder.append("\r");
+				strBuilder.append(1,'\r');
 				break;
 			case STRING_NULL:
-			    strBuilder.append("\0");
+			    strBuilder.append(1,'\0');
 				break;
 			case STRING_HEX:
 				strBuilder.append(hexToString(yytext));
@@ -175,8 +175,6 @@ int main()
 
 			case ERROR_STRING_ESC:
 				cout<<"Error undefined escape sequence " <<yytext[1] <<endl; exit(-3);
-
-
 	
 		}
 	}

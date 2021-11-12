@@ -1,0 +1,5 @@
+--- /home/student/Desktop/TOC/compi_hw1/tests/test_files/output_2.txt
++++ /home/student/Desktop/TOC/compi_hw1/tests/test_files/expected_2.txt
+@@ -1,2 +1 @@
+ 1 COMMENT //
+-Error ]
