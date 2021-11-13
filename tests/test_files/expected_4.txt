@@ -1,1 +1,1 @@
-1 RELOP >
+1 NOT not

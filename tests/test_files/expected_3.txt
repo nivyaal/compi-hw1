@@ -1,1 +1,1 @@
-1 BYTE byte
+1 BINOP *

@@ -42,7 +42,7 @@ whitespace      ([\t\n\r ])
 "<="|">="|"++"|"!="|"=="|"<"|">"        return RELOP;
 "+"|"-"|"*"|"/"                         return BINOP;
 (0|[1-9][0-9]*)                       return NUM;
-(\/\/)[^\][\r\n]*                       return COMMENT;
+(\/\/)[^\r\n]*                       return COMMENT;
 [a-zA-Z][a-zA-Z0-9]*                    return ID;
 ["]             {BEGIN(MAHROZET); return STRING_START;}
 <MAHROZET>([\x00-\x09\x0b-\x0c\x0e-\x21\x23-\x5b\x5d-\x7f])*   return STRING_NORMAL;
